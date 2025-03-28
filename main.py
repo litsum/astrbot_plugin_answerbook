@@ -1,21 +1,36 @@
-from astrbot.api.event import filter, AstrMessageEvent, MessageEventResult
-from astrbot.api.star import Context, Star, register
-from astrbot.api import logger
+import os
+import random
+import yaml
+from astrbot.api.all import *
 
-@register("helloworld", "YourName", "一个简单的 Hello World 插件", "1.0.0")
-class MyPlugin(Star):
+PLUGIN_DIR = os.path.join('data', 'plugins', 'astrbot_plugin_answerbook')
+ANSWER_BOOK_FILE = os.path.join(PLUGIN_DIR, 'answer_book.yml')
+
+@register("answer_book", "浅夏旧入梦", "一个简单的答案之书插件", "1.0.0")
+class AnswerBookPlugin(Star):
     def __init__(self, context: Context):
         super().__init__(context)
-    
-    # 注册指令的装饰器。指令名为 helloworld。注册成功后，发送 `/helloworld` 就会触发这个指令，并回复 `你好, {user_name}!`
-    @filter.command("helloworld")
-    async def helloworld(self, event: AstrMessageEvent):
-        '''这是一个 hello world 指令''' # 这是 handler 的描述，将会被解析方便用户了解插件内容。建议填写。
-        user_name = event.get_sender_name()
-        message_str = event.message_str # 用户发的纯文本消息字符串
-        message_chain = event.get_messages() # 用户所发的消息的消息链 # from astrbot.api.message_components import *
-        logger.info(message_chain)
-        yield event.plain_result(f"Hello, {user_name}, 你发了 {message_str}!") # 发送一条纯文本消息
-
-    async def terminate(self):
-        '''可选择实现 terminate 函数，当插件被卸载/停用时会调用。'''
+        self.answer_book = self._load_answer_book()
+    def _load_answer_book(self):
+        """加载答案书"""
+        try:
+            with open(ANSWER_BOOK_FILE, 'r', encoding='gbk') as f:
+                return yaml.safe_load(f) or {}
+        except Exception as e:
+            self.context.logger.error(f"加载答案之书文本库失败: {str(e)}")
+            return {}
+            
+    @event_message_type(EventMessageType.GROUP_MESSAGE)
+    async def on_group_message(self, event: AstrMessageEvent):
+        """群聊消息处理器"""
+        msg = event.message_str.strip()
+        msg_id = str(event.message_obj.message_id)
+        if msg.startswith("答案之书"):
+        # 随机选择一个答案
+            answer = random.choice(self.answer_book)
+            answer_text=str(answer)
+            chain = [
+                Reply(id=msg_id),
+                Plain(text=answer_text)
+            ]
+            yield event.chain_result(chain)
