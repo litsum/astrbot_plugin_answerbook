@@ -1,9 +1,10 @@
-# helloworld
+# AstrBot 答案之书插件
+一个简单的答案之书实现，在本地答案文本库中随机选择一条答案进行回复
 
-AstrBot 插件模板
 
-A template plugin for AstrBot plugin feature
+## 使用方法
+发送“答案之书+问题”，bot会自动引用你的问题并回复
 
-# 支持
 
-[帮助文档](https://astrbot.app)
+## 注意事项
+答案之书的文本库存放在插件目录下，可以自行修改
